@@ -13,6 +13,24 @@ from .models import PendingUser, User
 def home(request: HttpRequest):
     return render(request, "home.html")
 
+def login(request: HttpRequest):
+    if request.method == "POST":
+        email: str = request.POST.get("email")
+        password: str = request.POST.get("password")
+
+        user = auth.authenticate(request, email=email, password=password)
+
+        if user is not None:
+            auth.login(request, user)
+            messages.success(request, "You are now logged in")
+            return redirect("home")
+        else:
+            messages.error(request, "Invalid credentials")
+            return redirect("login")
+
+    else:
+        return render(request, "login.html")
+
 def register(request: HttpRequest):
     if request.method == "POST":
         email: str = request.POST["email"]
