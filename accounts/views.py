@@ -38,7 +38,7 @@ def register(request: HttpRequest):
             )
             messages.success(request, f"Verification code sent to {cleaned_email}")
             return render(
-                request, "register.html", context={"email": cleaned_email}
+                request, "verify_account.html", context={"email": cleaned_email}
             )
 
     else:
