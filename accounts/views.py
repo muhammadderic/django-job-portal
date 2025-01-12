@@ -10,6 +10,9 @@ from common.tasks import send_email
 
 from .models import PendingUser, User
 
+def home(request: HttpRequest):
+    return render(request, "home.html")
+
 def register(request: HttpRequest):
     if request.method == "POST":
         email: str = request.POST["email"]

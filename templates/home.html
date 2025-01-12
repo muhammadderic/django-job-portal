@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block title %} Job Portal | {% endblock %}
+
+{% block content %}
+
+{% include 'header.html' %}
+<section class="job-list">
+  <div class="job-card">
+    <h3>title</h3>
+    <p><strong>Company:</strong>company_name</p>
+    <p><strong>Type:</strong>job_type</p>
+    <p><strong>Posted:</strong>created_at</p>
+    <p><strong>Skills:</strong>skills</p>
+    <p>View Details</a>
+
+  </div>
+
+  <div>
+    <p>No adverts available</p>
+  </div>
+</section>
+
+{% endblock %}
