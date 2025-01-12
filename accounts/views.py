@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from django.contrib import messages
+from django.contrib import auth, messages
 from django.contrib.auth.hashers import make_password
 from django.http import HttpRequest
 from django.shortcuts import render
@@ -46,3 +46,25 @@ def register(request: HttpRequest):
 
     else:
         return render(request, "register.html")
+
+def verify_account(request: HttpRequest):
+    if request.method == "POST":
+        code: str = request.POST["code"]
+        email: str = request.POST["email"]
+        pending_user: PendingUser = PendingUser.objects.filter(
+            verification_code=code, email=email
+        ).first()
+        if pending_user and pending_user.is_valid():
+            user = User.objects.create(
+                email=pending_user.email, password=pending_user.password
+            )
+            pending_user.delete()
+            auth.login(request, user)
+            messages.success(request, "Account verified. You are now logged in")
+            return redirect("home")
+        else:
+            messages.error(request, "Invalid or expired verification code")
+            return render(request, "verify_account.html", {"email": email}, status=400)
+
+    # This handles GET request
+    return render(request, "verify_account.html")  
