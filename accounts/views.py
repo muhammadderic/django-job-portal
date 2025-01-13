@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from django.contrib import auth, messages
 from django.contrib.auth.hashers import make_password
 from django.http import HttpRequest
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.utils.crypto import get_random_string
 
 from common.tasks import send_email
@@ -30,6 +30,11 @@ def login(request: HttpRequest):
 
     else:
         return render(request, "login.html")
+
+def logout(request: HttpRequest):
+    auth.logout(request)
+    messages.success(request, "You are now logged out.")
+    return redirect("home")
 
 def register(request: HttpRequest):
     if request.method == "POST":
