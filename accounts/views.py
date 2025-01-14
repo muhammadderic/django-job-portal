@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 
 from django.contrib import auth, messages
+from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
 from django.http import HttpRequest
 from django.shortcuts import redirect, render
@@ -8,7 +9,7 @@ from django.utils.crypto import get_random_string
 
 from common.tasks import send_email
 
-from .models import PendingUser, User
+from .models import PendingUser, User, Token, TokenType
 
 def home(request: HttpRequest):
     return render(request, "home.html")
@@ -91,3 +92,35 @@ def verify_account(request: HttpRequest):
 
     # This handles GET request
     return render(request, "verify_account.html")  
+
+def send_password_reset_link(request: HttpRequest):
+    if request.method == "POST":
+        email: str = request.POST.get("email", "")
+        user = get_user_model().objects.filter(email=email.lower()).first()
+
+        if user:
+            token, _ = Token.objects.update_or_create(
+                user=user,
+                token_type=TokenType.PASSWORD_RESET,
+                defaults={
+                    "token": get_random_string(20),
+                    "created_at": datetime.now(timezone.utc),
+                },
+            )
+
+            email_data = {"email": email.lower(), "token": token.token}
+            send_email(
+                "Your Password Reset Link",
+                [email],
+                "emails/password_reset_template.html",
+                email_data,
+            )
+            messages.success(request, "Reset link sent to your email")
+            return redirect("reset_password_via_email")
+
+        else:
+            messages.error(request, "Email not found")
+            return redirect("reset_password_via_email")
+
+    else:
+        return render(request, "forgot_password.html")
