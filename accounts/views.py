@@ -142,3 +142,33 @@ def verify_password_reset_link(request: HttpRequest):
         "set_new_password_using_reset_token.html",
         context={"email": email, "token": reset_token},
     )
+
+def set_new_password_using_reset_link(request: HttpRequest):
+    """Set a new password given the token sent to the user email"""
+
+    if request.method == "POST":
+        password1: str = request.POST.get("password1")
+        password2: str = request.POST.get("password2")
+        email: str = request.POST.get("email")
+        reset_token = request.POST.get("token")
+
+        if password1 != password2:
+            messages.error(request, "Passwords do not match")
+            return render(
+                request,
+                "set_new_password_using_reset_token.html",
+                {"email": email, "token": reset_token},
+            )
+
+        token: Token = Token.objects.filter(
+            token=reset_token, token_type=TokenType.PASSWORD_RESET, user__email=email
+        ).first()
+
+        if not token or not token.is_valid():
+            messages.error(request, "Expired or Invalid reset link")
+            return redirect("reset_password_via_email")
+
+        token.reset_user_password(password1)
+        token.delete()
+        messages.success(request, "Password changed.")
+        return redirect("login")
