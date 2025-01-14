@@ -124,3 +124,21 @@ def send_password_reset_link(request: HttpRequest):
 
     else:
         return render(request, "forgot_password.html")
+
+def verify_password_reset_link(request: HttpRequest):
+    email = request.GET.get("email")
+    reset_token = request.GET.get("token")
+
+    token: Token = Token.objects.filter(
+        user__email=email, token=reset_token, token_type=TokenType.PASSWORD_RESET
+    ).first()
+
+    if not token or not token.is_valid():
+        messages.error(request, "Invalid or expired reset link.")
+        return redirect("reset_password_via_email")
+
+    return render(
+        request,
+        "set_new_password_using_reset_token.html",
+        context={"email": email, "token": reset_token},
+    )
