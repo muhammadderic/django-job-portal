@@ -9,11 +9,13 @@ from django.utils.crypto import get_random_string
 
 from common.tasks import send_email
 
+from .decorators import redirect_autheticated_user
 from .models import PendingUser, User, Token, TokenType
 
 def home(request: HttpRequest):
     return render(request, "home.html")
 
+@redirect_autheticated_user
 def login(request: HttpRequest):
     if request.method == "POST":
         email: str = request.POST.get("email")
@@ -37,6 +39,7 @@ def logout(request: HttpRequest):
     messages.success(request, "You are now logged out.")
     return redirect("home")
 
+@redirect_autheticated_user
 def register(request: HttpRequest):
     if request.method == "POST":
         email: str = request.POST["email"]
