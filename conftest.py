@@ -13,3 +13,8 @@ def user_instance(db):
     return User.objects.create(
         email="randomabc@gmail.com", password=make_password("abcd")
     )
+
+@pytest.fixture
+def auth_user_password() -> str:
+    """Returns the password needed for authentication"""
+    return "abcd"

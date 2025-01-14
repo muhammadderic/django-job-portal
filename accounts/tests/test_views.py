@@ -60,3 +60,26 @@ def test_verify_account_invalid_code(client: Client):
     messages = list(get_messages(response.wsgi_request))
     assert len(messages) == 1
     assert messages[0].level_tag == "error"
+
+def test_login_valid_credentials(client: Client, user_instance, auth_user_password):
+    url = reverse("login")
+    request_data = {"email": user_instance.email, "password": auth_user_password}
+    response = client.post(url, request_data)
+    assert response.status_code == 302
+    assert response.url == reverse("home")
+
+    messages = list(get_messages(response.wsgi_request))
+    assert len(messages) == 1
+    assert messages[0].level_tag == "success"
+
+def test_login_invalid_credentials(client: Client, user_instance):
+    url = reverse("login")
+    request_data = {"email": user_instance.email, "password": "randominvalidpass"}
+    response = client.post(url, request_data)
+    assert response.status_code == 302
+    assert response.url == reverse("login")
+
+    messages = list(get_messages(response.wsgi_request))
+    assert len(messages) == 1
+    assert messages[0].level_tag == "error"
+    assert "Invalid credentials" in str(messages[0])
