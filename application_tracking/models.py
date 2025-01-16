@@ -3,7 +3,7 @@ from django.db import models
 from accounts.models import User
 from common.models import BaseModel
 
-from .enums import (EmploymentType, ExperienceLevel, LocationType)
+from .enums import (ApplicationStatus, EmploymentType, ExperienceLevel, LocationType)
 
 class JobAdvert(BaseModel):
     title = models.CharField(max_length=150)
@@ -36,3 +36,24 @@ class JobAdvert(BaseModel):
     def publish_advert(self) -> None:
         self.is_published = True
         self.save(update_fields=["is_published"])
+
+    @property
+    def total_applicants(self):
+        return self.applications.count()
+
+
+class JobApplication(BaseModel):
+    name = models.CharField(max_length=50)
+    email = models.EmailField()
+    portfolio_url = models.URLField()
+    cv = models.FileField()
+    status = models.CharField(
+        max_length=20, 
+        choices=ApplicationStatus.choices, 
+        default=ApplicationStatus.APPLIED
+    )
+    job_advert = models.ForeignKey(
+        JobAdvert, 
+        related_name="applications", 
+        on_delete=models.CASCADE
+    )

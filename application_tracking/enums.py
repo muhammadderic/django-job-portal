@@ -16,3 +16,9 @@ class LocationType(models.TextChoices):
     ONSITE = "Onsite", "Onsite"
     HYBRID = "Hybrid", "Hybrid"
     REMOTE = "Remote", "Remote"
+
+
+class ApplicationStatus(models.TextChoices):
+    APPLIED = ("APPLIED", "APPLIED")
+    REJECTED = ("REJECTED", "REJECTED")
+    INTERVIEW = ("INTERVIEW", "INTERVIEW")
