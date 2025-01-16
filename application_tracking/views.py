@@ -3,6 +3,8 @@ from django.core.paginator import Paginator
 from django.http import HttpRequest
 from django.shortcuts import get_object_or_404, redirect, render
 
+from accounts.models import User
+
 from .forms import JobAdvertForm, JobApplicationForm
 from .models import JobAdvert, JobApplication
 
@@ -77,3 +79,18 @@ def apply(request: HttpRequest, advert_id):
         "application_form": form
     }
     return render(request, "advert.html", context)
+
+
+def my_applications(request: HttpRequest):
+    user: User = request.user
+    applications = JobApplication.objects.filter(email=user.email)
+    paginator = Paginator(applications, 10)
+
+    requested_page = request.GET.get("page")
+    paginated_applications = paginator.get_page(requested_page)
+
+    context = {
+        "my_applications": paginated_applications
+    }
+
+    return render(request, "my_applications.html", context)
