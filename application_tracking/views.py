@@ -4,7 +4,7 @@ from django.http import HttpRequest
 from django.shortcuts import get_object_or_404, redirect, render
 
 from .forms import JobAdvertForm, JobApplicationForm
-from .models import JobAdvert
+from .models import JobAdvert, JobApplication
 
 
 def create_advert(request: HttpRequest):
@@ -48,4 +48,32 @@ def get_advert(request: HttpRequest, advert_id):
         "application_form": form,
     }
 
+    return render(request, "advert.html", context)
+
+
+def apply(request: HttpRequest, advert_id):
+    advert = get_object_or_404(JobAdvert, pk=advert_id)
+    if request.method == "POST":
+        form = JobApplicationForm(request.POST, request.FILES)
+        if form.is_valid():
+            # Prevent duplicate applications for the same email
+            email = form.cleaned_data["email"]
+            if advert.applications.filter(email__iexact=email).exists():
+                messages.error(request, "You have already applied for this position")
+                return redirect("job_advert", advert_id=advert_id)
+            
+            # Save the new application
+            application: JobApplication = form.save(commit=False)
+            application.job_advert = advert
+            application.save()
+            messages.success(request, "Application submitted successfully.")
+            return redirect("job_advert", advert_id=advert_id)
+
+    else:
+        form = JobApplicationForm()
+    
+    context = {
+        "job_advert": advert,
+        "application_form": form
+    }
     return render(request, "advert.html", context)
