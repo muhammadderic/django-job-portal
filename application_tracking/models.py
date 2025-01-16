@@ -1,4 +1,5 @@
 from django.db import models
+from django.urls import reverse
 
 from accounts.models import User
 from common.models import BaseModel
@@ -40,6 +41,9 @@ class JobAdvert(BaseModel):
     @property
     def total_applicants(self):
         return self.applications.count()
+
+    def get_absolute_url(self):
+        return reverse("job_advert", kwargs={"advert_id": self.id})
 
 
 class JobApplication(BaseModel):

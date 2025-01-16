@@ -1,5 +1,5 @@
 from django.forms import ModelForm
-from .models import JobAdvert
+from .models import JobAdvert, JobApplication
 from django import forms
 
 class JobAdvertForm(ModelForm):
@@ -28,4 +28,22 @@ class JobAdvertForm(ModelForm):
             "location": forms.TextInput(attrs={"placeholder":"Optional", "class":"form-control"}),
             "deadline": forms.DateInput(attrs={"placeholder":"Date", "class":"form-control", "type":"date"}),
             "skills": forms.TextInput(attrs={"placeholder":"Comma separated skills", "class":"form-control"}),
+        }
+
+
+class JobApplicationForm(ModelForm):
+    class Meta:
+        model = JobApplication
+        fields = [
+            "name",
+            "email",
+            "portfolio_url",
+            "cv"
+        ]
+
+        widgets = {
+            "name": forms.TextInput(attrs={"placeholder": "Your name", "class":"form-control"}),
+            "email": forms.EmailInput(attrs={"placeholder": "Your email", "class":"form-control"}),
+            "portfolio_url": forms.URLInput(attrs={"placeholder": "Portfolio link", "class":"form-control"}),
+            "cv": forms.FileInput(attrs={"placeholder": "Select your cv", "class":"form-control", "accept":".pdf, .docx, .doc"}),
         }
