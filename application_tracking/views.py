@@ -1,4 +1,5 @@
 from django.contrib import messages
+from django.core.paginator import Paginator
 from django.http import HttpRequest
 from django.shortcuts import get_object_or_404, redirect, render
 
@@ -24,6 +25,19 @@ def create_advert(request: HttpRequest):
     }
 
     return render(request, "create_advert.html", context)
+
+
+def list_adverts(request: HttpRequest):
+    active_jobs = JobAdvert.objects.active()
+
+    paginator = Paginator(active_jobs, 10)
+    requested_page = request.GET.get("page")
+    paginated_adverts = paginator.get_page(requested_page)
+   
+    context = {
+        "job_adverts": paginated_adverts
+    }
+    return render(request, "home.html", context)
 
 
 def get_advert(request: HttpRequest, advert_id):

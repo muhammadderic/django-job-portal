@@ -1,10 +1,33 @@
 from django.db import models
 from django.urls import reverse
+from django.utils import timezone
+from django.db.models import Q
 
 from accounts.models import User
 from common.models import BaseModel
 
 from .enums import (ApplicationStatus, EmploymentType, ExperienceLevel, LocationType)
+
+
+class JobAdvertQuerySet(models.QuerySet):
+    def active(self):
+        return self.filter(is_published=True, deadline__gte=timezone.now().date())
+
+    def search(self, keyword, location):
+        query = Q()
+        if keyword:
+            query &= (
+                Q(title__icontains=keyword)
+                | Q(company_name__icontains=keyword)
+                | Q(description__icontains=keyword)
+                | Q(skills__icontains=keyword)
+            )
+
+        if location:
+            query &= Q(location__icontains=location)
+
+        return self.active().filter(query)
+
 
 class JobAdvert(BaseModel):
     title = models.CharField(max_length=150)
@@ -30,6 +53,8 @@ class JobAdvert(BaseModel):
     deadline = models.DateField()
     skills = models.CharField(max_length=255)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    objects = JobAdvertQuerySet.as_manager()
 
     class Meta:
         ordering = ("-created_at",)
