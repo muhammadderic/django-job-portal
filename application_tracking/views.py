@@ -1,6 +1,6 @@
 from django.contrib import messages
 from django.core.paginator import Paginator
-from django.http import HttpRequest
+from django.http import HttpRequest, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
@@ -52,6 +52,25 @@ def get_advert(request: HttpRequest, advert_id):
     }
 
     return render(request, "advert.html", context)
+
+
+def update_advert(request: HttpRequest, advert_id):
+    advert: JobAdvert = get_object_or_404(JobAdvert, pk=advert_id)
+    if request.user != advert.created_by:
+        return HttpResponseForbidden("You can only update an advert created by you.")
+    
+    form = JobAdvertForm(request.POST or None, instance=advert)
+    if form.is_valid():
+        instance: JobAdvert = form.save(commit=False)
+        instance.save()
+        messages.success(request, "Advert updated successfully.")
+        return redirect(instance.get_absolute_url())
+    
+    context = {
+        "job_advert_form": form,
+        "btn_text": "Update advert"
+    }
+    return render(request, "create_advert.html", context)
 
 
 def apply(request: HttpRequest, advert_id):
