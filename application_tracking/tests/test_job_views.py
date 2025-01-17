@@ -48,3 +48,46 @@ def test_create_advert(authenticate_user_client):
     messages = list(get_messages(response.wsgi_request))
     assert len(messages) == 1
     assert messages[0].level_tag == "success"
+
+
+def test_delete_advert(authenticate_user_client):
+    client, user = authenticate_user_client
+    advert = JobAdvertFactory(created_by=user)
+    url = reverse("delete_advert", kwargs={"advert_id":advert.id})
+    response = client.post(url)
+    assert response.status_code == 302
+    assert response.url == reverse("my_jobs")
+
+    messages = list(get_messages(response.wsgi_request))
+    assert len(messages) == 1
+    assert messages[0].level_tag == "success"
+    assert JobAdvert.objects.count() == 0
+
+
+def test_edit_advert(authenticate_user_client):
+    client, user = authenticate_user_client
+    advert: JobAdvert  = JobAdvertFactory(created_by=user, title="RR", company_name="YY")
+    url = reverse("update_advert", kwargs={"advert_id": advert.id})
+
+    request_data = {
+        "title": "Updated",
+        "company_name": "Ridwanray",
+        "employment_type": "Contract",
+        "experience_level" : "Senior",
+        "job_type": "Remote",
+        "deadline": "2025-02-01",
+        "skills": "Python, Django",
+        "description": "Sample"
+    }
+
+    response = client.post(url, request_data)
+    assert response.status_code == 302
+    assert response.url == reverse("job_advert", kwargs={"advert_id":advert.id})
+
+    messages = list(get_messages(response.wsgi_request))
+    assert len(messages) == 1
+    assert messages[0].level_tag == "success"
+
+    advert.refresh_from_db()
+    assert advert.title == request_data["title"]
+    assert advert.company_name == request_data["company_name"]
