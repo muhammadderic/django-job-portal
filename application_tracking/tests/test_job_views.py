@@ -1,10 +1,11 @@
 import pytest
 
 from django.contrib.messages import get_messages
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test.client import Client
 from django.urls import reverse
 
-from application_tracking.models import JobAdvert
+from application_tracking.models import JobAdvert, JobApplication
 
 from .factories import JobAdvertFactory, JobApplicationFactory, fake
 
@@ -22,6 +23,15 @@ def test_list_adverts(client: Client, user_instance):
     paginated_adverts = response.context["job_adverts"]
     assert paginated_adverts.paginator.count == 20
     assert len(paginated_adverts.object_list) == 10
+
+
+def test_retrieve_an_advert(client: Client, user_instance):
+    advert = JobAdvertFactory(created_by=user_instance)
+    url = reverse("job_advert", kwargs={"advert_id": advert.id})
+    response = client.get(url)
+    assert response.status_code == 200
+    assert "job_advert" in response.context
+    assert "application_form" in response.context
 
 
 def test_create_advert(authenticate_user_client):
@@ -118,3 +128,55 @@ def test_get_my_jobs(authenticate_user_client):
     assert response.status_code == 200
     assert "my_jobs" in response.context
     assert len(response.context["my_jobs"].object_list) == 4
+
+
+def test_apply_for_a_job(client, user_instance):
+    advert = JobAdvertFactory(created_by=user_instance)
+    url = reverse("apply_for_job", kwargs={"advert_id": advert.id})
+
+    cv = SimpleUploadedFile("sample.pdf", b"content")
+
+    request_data = {
+        "name":"Random name",
+        "email": "random@gmail.com",
+        "portfolio_url":"https://docs.djangoproject.com/en/",
+        "cv":cv
+    }
+    response = client.post(url, request_data)
+    assert response.status_code == 302
+    assert response.url == reverse("job_advert", kwargs={"advert_id":advert.id})
+
+    messages = list(get_messages(response.wsgi_request))
+    assert len(messages) == 1
+    assert messages[0].level_tag == "success"
+
+    application = JobApplication.objects.filter(email=request_data["email"]).first()
+    assert application.name == request_data["name"]
+    assert application.cv.name.endswith(".pdf")
+
+    application.cv.delete(save=False)
+
+
+def test_apply_for_job_using_duplicate_email(client: Client, user_instance):
+    advert = JobAdvertFactory(created_by=user_instance)
+    application = JobApplicationFactory(job_advert=advert, email="abcabc1@gmail.com")
+
+    url = reverse("apply_for_job", kwargs={"advert_id": advert.id})
+
+    cv = SimpleUploadedFile("sample.pdf", b"content")
+
+    request_data = {
+        "name":"Random name",
+        "email": application.email,
+        "portfolio_url":"https://docs.djangoproject.com/en/",
+        "cv":cv
+    }
+    response = client.post(url, request_data)
+    assert response.status_code == 302
+    assert response.url == reverse("job_advert", kwargs={"advert_id":advert.id})
+
+    messages = list(get_messages(response.wsgi_request))
+    assert len(messages) == 1
+    assert messages[0].level_tag == "error"
+
+    assert JobApplication.objects.filter(email=application.email, job_advert=advert.id).count() == 1
