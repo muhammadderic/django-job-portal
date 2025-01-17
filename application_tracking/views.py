@@ -144,3 +144,21 @@ def my_jobs(request: HttpRequest):
     }
 
     return render(request, "my_jobs.html",  context)
+
+
+@login_required 
+def advert_applications(request: HttpRequest, advert_id):
+    advert: JobAdvert = get_object_or_404(JobAdvert, pk=advert_id)
+    if request.user != advert.created_by:
+        return HttpResponseForbidden("You can only see applications for an advert created by you.")
+    
+    applications = advert.applications.all()
+    paginator = Paginator(applications, 10)
+    requested_page = request.GET.get("page")
+    paginated_applications = paginator.get_page(requested_page)
+
+    context = {
+        "applications": paginated_applications,
+        "advert":advert
+    }
+    return render(request, "advert_applications.html", context)
