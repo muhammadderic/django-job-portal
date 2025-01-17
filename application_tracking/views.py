@@ -73,6 +73,16 @@ def update_advert(request: HttpRequest, advert_id):
     return render(request, "create_advert.html", context)
 
 
+def delete_advert(request: HttpRequest, advert_id):
+    advert: JobAdvert = get_object_or_404(JobAdvert, pk=advert_id)
+    if request.user != advert.created_by:
+        return HttpResponseForbidden("You can only update an advert created by you.")
+    
+    advert.delete()
+    messages.success(request, "Advert deleted successfully.")
+    return redirect("my_jobs")
+
+
 def apply(request: HttpRequest, advert_id):
     advert = get_object_or_404(JobAdvert, pk=advert_id)
     if request.method == "POST":

@@ -55,7 +55,7 @@
             </a>
           </td>
           <td>
-            <form method='POST' action="#">{% csrf_token %}
+            <form method='POST' action="{% url 'delete_advert' job.id %}">{% csrf_token %}
               <button type="submit" class='small-btn'>Delete</button>
             </form>
           </td>
