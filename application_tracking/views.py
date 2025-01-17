@@ -10,6 +10,7 @@ from .forms import JobAdvertForm, JobApplicationForm
 from .models import JobAdvert, JobApplication
 
 
+@login_required
 def create_advert(request: HttpRequest):
     form = JobAdvertForm(request.POST or None)
 
@@ -54,6 +55,7 @@ def get_advert(request: HttpRequest, advert_id):
     return render(request, "advert.html", context)
 
 
+@login_required
 def update_advert(request: HttpRequest, advert_id):
     advert: JobAdvert = get_object_or_404(JobAdvert, pk=advert_id)
     if request.user != advert.created_by:
@@ -73,6 +75,7 @@ def update_advert(request: HttpRequest, advert_id):
     return render(request, "create_advert.html", context)
 
 
+@login_required
 def delete_advert(request: HttpRequest, advert_id):
     advert: JobAdvert = get_object_or_404(JobAdvert, pk=advert_id)
     if request.user != advert.created_by:
@@ -111,6 +114,7 @@ def apply(request: HttpRequest, advert_id):
     return render(request, "advert.html", context)
 
 
+@login_required
 def my_applications(request: HttpRequest):
     user: User = request.user
     applications = JobApplication.objects.filter(email=user.email)
@@ -126,6 +130,7 @@ def my_applications(request: HttpRequest):
     return render(request, "my_applications.html", context)
 
 
+@login_required
 def my_jobs(request: HttpRequest):
     user: User = request.user
     jobs = JobAdvert.objects.filter(created_by=user)
