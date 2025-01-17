@@ -6,7 +6,7 @@ from django.urls import reverse
 
 from application_tracking.models import JobAdvert
 
-from .factories import JobAdvertFactory, fake
+from .factories import JobAdvertFactory, JobApplicationFactory, fake
 
 pytestmark = pytest.mark.django_db
 
@@ -91,3 +91,30 @@ def test_edit_advert(authenticate_user_client):
     advert.refresh_from_db()
     assert advert.title == request_data["title"]
     assert advert.company_name == request_data["company_name"]
+
+
+def test_get_my_applications(authenticate_user_client):
+    client, user = authenticate_user_client
+    JobApplicationFactory.create_batch(5, email=user.email, job_advert = JobAdvertFactory(
+        created_by = UserFactory()
+    ))
+    JobApplicationFactory.create_batch(10, email="randomuser@gmail.com", job_advert = JobAdvertFactory(
+        created_by = UserFactory()
+    ))
+    url = reverse("my_applications")
+    response = client.get(url)
+    assert response.status_code == 200
+    assert "my_applications" in response.context
+    assert len(response.context["my_applications"].object_list) == 5
+
+
+def test_get_my_jobs(authenticate_user_client):
+    client, user = authenticate_user_client
+    JobAdvertFactory.create_batch(4, created_by=user)
+    JobAdvertFactory.create_batch(2, created_by=UserFactory())
+    url = reverse("my_jobs")
+    response = client.get(url)
+
+    assert response.status_code == 200
+    assert "my_jobs" in response.context
+    assert len(response.context["my_jobs"].object_list) == 4
