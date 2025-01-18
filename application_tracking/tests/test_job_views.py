@@ -5,7 +5,9 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test.client import Client
 from django.urls import reverse
 
+from accounts.tests.factories import UserFactory
 from application_tracking.models import JobAdvert, JobApplication
+from application_tracking.enums import ApplicationStatus
 
 from .factories import JobAdvertFactory, JobApplicationFactory, fake
 
@@ -180,3 +182,51 @@ def test_apply_for_job_using_duplicate_email(client: Client, user_instance):
     assert messages[0].level_tag == "error"
 
     assert JobApplication.objects.filter(email=application.email, job_advert=advert.id).count() == 1
+
+
+def test_decide_application_authorised(authenticate_user_client):
+    client, user = authenticate_user_client
+    advert = JobAdvertFactory(created_by=user)
+    job_application = JobApplicationFactory(job_advert=advert, email="random@gmail.com", 
+                                            status=ApplicationStatus.APPLIED)
+    url = reverse("decide", kwargs={"job_application_id": job_application.id})
+    request_data = {
+        "status":"INTERVIEW"
+    }
+    response = client.post(url, request_data)
+    assert response.status_code == 302
+    assert response.url == reverse("advert_applications", kwargs={"advert_id":advert.id})
+
+    job_application.refresh_from_db()
+    assert job_application.status == request_data["status"]
+
+
+def test_decide_application_unauthorised(authenticate_user_client):
+    client, _ = authenticate_user_client
+    advert = JobAdvertFactory(created_by=UserFactory())
+    job_application = JobApplicationFactory(job_advert=advert, email="random@gmail.com", 
+                                            status=ApplicationStatus.APPLIED)
+    url = reverse("decide", kwargs={"job_application_id": job_application.id})
+    request_data = {
+        "status":"INTERVIEW"
+    }
+    response = client.post(url, request_data)
+    assert response.status_code == 403
+    job_application.refresh_from_db()
+    assert job_application.status == "APPLIED"
+
+
+def test_get_applicants_for_an_advert(authenticate_user_client):
+    client, user = authenticate_user_client
+    advert1 = JobAdvertFactory(created_by=user)
+    JobApplicationFactory.create_batch(5, job_advert=advert1, email="abcabc4@gmail.com")
+
+    advert2 = JobAdvertFactory(created_by=user)
+    JobApplicationFactory.create_batch(2, job_advert=advert2, email="abcabc4@gmail545.com")
+
+    url = reverse("advert_applications", kwargs={"advert_id":advert2.id})
+
+    response = client.get(url)
+    assert response.status_code == 200
+    assert "applications" in response.context
+    assert len(response.context["applications"].object_list) == 2
