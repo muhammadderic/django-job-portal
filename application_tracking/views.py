@@ -162,3 +162,32 @@ def advert_applications(request: HttpRequest, advert_id):
         "advert":advert
     }
     return render(request, "advert_applications.html", context)
+
+
+@login_required
+def decide(request: HttpRequest, job_application_id):
+    job_application: JobApplication = get_object_or_404(JobApplication, pk=job_application_id)
+
+    if request.user != job_application.job_advert.created_by:
+        return HttpResponseForbidden("You can only decide on an advert created by you.")
+    
+    if request.method == "POST":
+        status = request.POST.get("status")
+        job_application.status = status
+        job_application.save(update_fields=["status"])
+        messages.success(request, f"Application status updated to {status}")
+
+        if status == ApplicationStatus.REJECTED:
+            context = {
+                "applicant_name":job_application.name,
+                "job_title":job_application.job_advert.title,
+                "company_name":job_application.job_advert.company_name,
+            }
+            send_email.delay(
+                f"Application Outcome for {job_application.job_advert.title}",
+                [job_application.email],
+                "emails/job_application_update.html",
+                context
+            )
+        
+        return redirect("advert_applications", advert_id=job_application.job_advert.id)
