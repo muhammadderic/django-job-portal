@@ -191,3 +191,17 @@ def decide(request: HttpRequest, job_application_id):
             )
         
         return redirect("advert_applications", advert_id=job_application.job_advert.id)
+
+
+def search(request: HttpRequest):
+    keyword = request.GET.get("keyword")
+    location = request.GET.get("location")
+    result = JobAdvert.objects.search(keyword, location)
+    paginator = Paginator(result, 10)
+    requested_page = request.GET.get("page")
+    paginated_adverts = paginator.get_page(requested_page)
+
+    context = {
+        "job_adverts": paginated_adverts
+    }
+    return render(request, "home.html", context)
