@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 
 from django.contrib import auth, messages
 from django.contrib.auth import get_user_model
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.hashers import make_password
 from django.http import HttpRequest
 from django.shortcuts import redirect, render
