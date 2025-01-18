@@ -126,7 +126,7 @@ body {
 
 .homepage-header {
   font-family: system-ui; 
-  background-image: url('header-image.jpeg');
+  background-image: url('header-image-i.jpg');
   background-repeat: no-repeat;
   background-size: cover;
   color: #fff;
@@ -134,6 +134,7 @@ body {
   background-position: center center;
   text-align: center;
   padding: 30px;
+  padding-top: 5rem;
   background-color: #f4f4f4;
 }
 
@@ -143,21 +144,41 @@ body {
   right: 20px;
 }
 
-.homepage-header-buttons a  {
+/* Base styles for all buttons */
+.homepage-header-buttons a {
   text-decoration: none;
   margin: 0 10px;
   padding: 10px 20px;
   color: white;
-  background-color: #9A2C47;
   border-radius: 5px;
   font-size: 14px;
   font-weight: bold;
-  
 }
 
-.homepage-header-buttons a:hover {
+/* Home button: blue */
+.btn-home {
+  background-color:rgb(143, 196, 253);
+}
+.btn-home:hover {
+  background-color:rgb(98, 171, 250);
+}
+
+/* Logout button: red */
+.btn-logout {
+  background-color: #dc3545;
+}
+.btn-logout:hover {
+  background-color: #a71d2a;
+}
+
+/* All other buttons: dark pink */
+.btn-others {
+  background-color: #9A2C47;
+}
+.btn-others:hover {
   background-color: #7A2237;
 }
+
 
 /* search */
 
